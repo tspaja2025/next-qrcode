@@ -1,103 +1,356 @@
-import Image from "next/image";
+"use client";
+
+import {
+  CopyIcon,
+  DownloadIcon,
+  HistoryIcon,
+  ImageIcon,
+  Link2Icon,
+  MailIcon,
+  MessageSquareIcon,
+  TrashIcon,
+  WifiIcon,
+} from "lucide-react";
+import { useCallback } from "react";
+import { QRCode } from "react-qrcode-logo";
+import { DarkModeToggle } from "@/components/DarkModeToggle";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useQRCode } from "@/hooks/use-qr-code";
+import { downloadQRAsPNG, downloadQRAsSVG } from "@/lib/downloadQR";
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const {
+    text,
+    setText,
+    size,
+    setSize,
+    fgColor,
+    setFgColor,
+    bgColor,
+    setBgColor,
+    logo,
+    setLogo,
+    history,
+    addToHistory,
+    clearHistory,
+  } = useQRCode();
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const setQuickTemplate = (template: string, value: string) => {
+    switch (template) {
+      case "url":
+        setText(value || "https://");
+        break;
+      case "email":
+        setText(value ? `mailto:${value}` : "mailto:");
+        break;
+      case "sms":
+        setText(value ? `sms:${value}` : "sms:");
+        break;
+      case "wifi":
+        setText("WIFI:T:WPA;S:NetworkName;P:Password;;");
+        break;
+    }
+  };
+
+  const handleDownload = useCallback(() => {
+    if (text) addToHistory(text, logo);
+    downloadQRAsPNG("qr-code");
+  }, [text, logo, addToHistory]);
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => setLogo(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <div className="font-sans min-h-screen">
+      <header className="flex items-center justify-between px-4 py-2">
+        <div>
+          <h4 className="text-lg font-semibold tracking-tight">
+            QR Code Generator
+          </h4>
+          <p className="text-sm text-muted-foreground">
+            Create custom QR codes instantly for URLs, contacts, WiFi, and more
+          </p>
         </div>
+        <DarkModeToggle />
+      </header>
+
+      <main className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-4 max-w-6xl mx-auto">
+        {/* Config Panel */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Configure your QR code</CardTitle>
+            <CardDescription>
+              Enter your content and customize the appearance
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="text">
+              <TabsList className="w-full">
+                <TabsTrigger value="text">Text/URL</TabsTrigger>
+                <TabsTrigger value="wifi">WiFi</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="text" className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="text">Content</Label>
+                  <Input
+                    id="text"
+                    placeholder="Enter text or URL"
+                    value={text}
+                    onChange={(e) => setText(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="sms">SMS Number</Label>
+                  <Input
+                    id="sms"
+                    placeholder="+1234567890"
+                    onChange={(e) => setQuickTemplate("sms", e.target.value)}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() =>
+                      setQuickTemplate("url", "https://example.com")
+                    }
+                  >
+                    <Link2Icon /> URL
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() =>
+                      setQuickTemplate("email", "email@example.com")
+                    }
+                  >
+                    <MailIcon /> Email
+                  </Button>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="wifi" className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Format: WIFI:T:WPA;S:NetworkName;P:Password;;
+                </p>
+                <div className="space-y-2">
+                  <Label htmlFor="wifi">WiFi Configuration</Label>
+                  <Input
+                    id="wifi"
+                    placeholder="WIFI:T:WPA;S:MyNetwork;P:MyPassword;;"
+                    value={text}
+                    onChange={(e) => setText(e.target.value)}
+                  />
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => setQuickTemplate("wifi", "")}
+                >
+                  <WifiIcon /> WiFi Template
+                </Button>
+              </TabsContent>
+            </Tabs>
+
+            {/* Settings */}
+            <h4 className="leading-none font-semibold my-4">Settings</h4>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="size">Size: {size}px</Label>
+                <Slider
+                  id="size"
+                  min={128}
+                  max={512}
+                  step={32}
+                  value={[size]}
+                  onValueChange={(values) => setSize(values[0])}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <ColorField
+                  id="fgColor"
+                  label="Foreground Color"
+                  color={fgColor}
+                  setColor={setFgColor}
+                />
+                <ColorField
+                  id="bgColor"
+                  label="Background Color"
+                  color={bgColor}
+                  setColor={setBgColor}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="logo">Logo (optional)</Label>
+                <div className="flex gap-2 items-center">
+                  <Input
+                    id="logo"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoUpload}
+                  />
+                  {logo && <ImageIcon className="text-green-500" />}
+                  {logo && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setLogo(undefined)}
+                    >
+                      Remove
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Preview Panel */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Preview and Download</CardTitle>
+            <CardDescription>Your QR code will appear here</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-center">
+              {text ? (
+                <QRCode
+                  id="qr-code"
+                  value={text}
+                  size={size}
+                  bgColor={bgColor}
+                  fgColor={fgColor}
+                  ecLevel="H"
+                  logoImage={logo}
+                  logoWidth={size / 5}
+                />
+              ) : (
+                <EmptyState />
+              )}
+            </div>
+
+            {text && (
+              <div className="flex gap-2">
+                <Button onClick={handleDownload}>
+                  <DownloadIcon /> Download
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => downloadQRAsSVG(text, fgColor, bgColor, size)}
+                >
+                  <DownloadIcon /> SVG
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => navigator.clipboard.writeText(text)}
+                >
+                  <CopyIcon /> Copy
+                </Button>
+              </div>
+            )}
+
+            {text && (
+              <div className="space-y-2">
+                <Label htmlFor="preview">Preview Content</Label>
+                <div className="p-3 rounded text-sm font-mono break-all text-muted-foreground">
+                  {text}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* History Panel */}
+        {history.length > 0 && (
+          <Card className="lg:col-span-3">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div className="flex items-center gap-2">
+                <HistoryIcon /> <CardTitle>History</CardTitle>
+              </div>
+              <Button variant="ghost" size="sm" onClick={clearHistory}>
+                <TrashIcon className="mr-1" /> Clear
+              </Button>
+            </CardHeader>
+            <CardContent className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+              {history.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setText(item.text)}
+                  className="border rounded p-2 hover:bg-muted transition flex flex-col items-center text-xs text-muted-foreground"
+                >
+                  <QRCode
+                    value={item.text}
+                    size={80}
+                    fgColor="#000"
+                    bgColor="#fff"
+                    logoImage={item.logo}
+                  />
+                  <span className="truncate mt-1">
+                    {item.text.slice(0, 20)}
+                  </span>
+                </button>
+              ))}
+            </CardContent>
+          </Card>
+        )}
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+    </div>
+  );
+}
+
+function ColorField({
+  id,
+  label,
+  color,
+  setColor,
+}: {
+  id: string;
+  label: string;
+  color: string;
+  setColor: (v: string) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id}>{label}</Label>
+      <div className="flex gap-2">
+        <Input
+          type="color"
+          value={color}
+          onChange={(e) => setColor(e.target.value)}
+        />
+        <Input
+          type="text"
+          value={color}
+          onChange={(e) => setColor(e.target.value)}
+        />
+      </div>
+    </div>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div className="text-center">
+      <MessageSquareIcon className="size-16 mx-auto opacity-50" />
+      <p className="text-lg">Enter content to generate QR code</p>
     </div>
   );
 }

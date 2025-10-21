@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useCallback } from "react";
 import { QRCode } from "react-qrcode-logo";
-import { DarkModeToggle } from "@/components/DarkModeToggle";
+import { Header } from "@/components/qr/Header";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -78,17 +78,7 @@ export default function Home() {
 
   return (
     <div className="font-sans min-h-screen">
-      <header className="flex items-center justify-between px-4 py-2">
-        <div>
-          <h4 className="text-lg font-semibold tracking-tight">
-            QR Code Generator
-          </h4>
-          <p className="text-sm text-muted-foreground">
-            Create custom QR codes instantly for URLs, contacts, WiFi, and more
-          </p>
-        </div>
-        <DarkModeToggle />
-      </header>
+      <Header />
 
       <main className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-4 max-w-6xl mx-auto">
         {/* Config Panel */}
